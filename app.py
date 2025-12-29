@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import matplotlib.font_manager as fm
 
 # ===== 한글 폰트 설정 =====
-font_path = "NanumGothic-Regular.ttf"  # NanumGothic.ttf 파일 필요
+font_path = "NanumGothic-Regular.ttf"  # 반드시 프로젝트 루트에 위치
 font_prop = fm.FontProperties(fname=font_path)
 plt.rcParams["font.family"] = font_prop.get_name()
 plt.rcParams["axes.unicode_minus"] = False
@@ -136,24 +136,32 @@ for i, name in enumerate(ITEMS):
 
 st.divider()
 
+# ===== 다음 날 버튼 =====
 if st.button("▶ 다음 날"):
     if st.session_state.day < DAY_LIMIT:
         st.session_state.day += 1
         update_prices()
     else:
         st.session_state.page = "result"
-    st.experimental_rerun()  # 마지막 한 번만 호출
+    st.experimental_rerun()  # 한 번만 호출 → 그래프 갱신됨
 
 # ===== 그래프 =====
 st.subheader("📈 가격 추이")
-fig, ax = plt.subplots(figsize=(10, 5), dpi=120)  # 적당한 크기 + 선명도
+fig, ax = plt.subplots(figsize=(10, 5), dpi=120)
+colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd"]
 
-for name in ITEMS:
-    ax.plot(st.session_state.stocks[name]["history"], linewidth=2, label=name)
+for i, name in enumerate(ITEMS):
+    ax.plot(st.session_state.stocks[name]["history"], linewidth=2, color=colors[i])
 
-ax.legend(fontsize=10, ncol=3, loc="upper center")
 ax.grid(alpha=0.3)
 ax.set_xlabel("Day", fontsize=10)
 ax.set_ylabel("Price", fontsize=10)
 
 st.pyplot(fig)
+
+# ===== 색상 안내 (텍스트 + 이모지) =====
+st.subheader("📌 메뉴 색상 안내")
+menu_display = ""
+for i, name in enumerate(ITEMS):
+    menu_display += f"<span style='color:{colors[i]}'>⬛ {name}</span>  "
+st.markdown(menu_display, unsafe_allow_html=True)
