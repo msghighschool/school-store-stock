@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import matplotlib.font_manager as fm
 
 # ===== 한글 폰트 설정 =====
-font_path = "NanumGothic-Regular.ttf"  # 반드시 프로젝트 루트에 위치
+font_path = "NanumGothic-Regular.ttf"  # 프로젝트 루트에 위치 필요
 font_prop = fm.FontProperties(fname=font_path)
 plt.rcParams["font.family"] = font_prop.get_name()
 plt.rcParams["axes.unicode_minus"] = False
@@ -51,7 +51,6 @@ EVENTS = {
 def update_prices():
     for name, data in st.session_state.stocks.items():
         change = random.uniform(-data["vol"], data["vol"])
-
         if st.session_state.day in EVENTS:
             _, effect = EVENTS[st.session_state.day]
             trust = random.randint(50, 100)
@@ -60,10 +59,8 @@ def update_prices():
                     change += effect[name]
                 elif "전체" in effect:
                     change += effect["전체"]
-
         if random.random() < 0.15:
             change += random.uniform(-0.25, 0.25)
-
         new_price = max(500, int(data["price"] * (1 + change)))
         data["price"] = new_price
         data["history"].append(new_price)
@@ -75,41 +72,33 @@ def arrow(h):
 # ===== 결과 페이지 =====
 if st.session_state.page == "result":
     st.title("🏁 모의 투자 결과")
-
     total = st.session_state.cash
     for name in ITEMS:
         total += st.session_state.stocks[name]["price"] * st.session_state.portfolio[name]
-
     if st.session_state.risk >= 15:
         style = "공격형 🐯"
     elif st.session_state.risk >= 5:
         style = "균형형 🦊"
     else:
         style = "안정형 🐢"
-
     st.metric("💰 최종 자산", f"{total:,}원")
     st.metric("📊 투자 성향", style)
-
     st.subheader("📦 보유 자산")
     for k, v in st.session_state.portfolio.items():
         st.write(f"{k}: {v}개")
-
     if st.button("🔄 다시 하기"):
         reset_game()
         st.experimental_rerun()
-
     st.stop()
 
 # ===== 게임 페이지 =====
 st.title("🏪 매점 모의 주식 게임")
 st.caption("운빨 + 뉴스 + 이벤트 기반 모의 투자")
-
 st.write(f"📅 Day {st.session_state.day} / {DAY_LIMIT}")
 st.write(f"💰 현금: {st.session_state.cash:,}원")
 
 if st.session_state.day in EVENTS:
     st.info(f"📰 오늘 이벤트: {EVENTS[st.session_state.day][0]}")
-
 if st.session_state.day + 1 in EVENTS:
     trust = random.randint(50, 100)
     st.warning(f"🔮 사전 뉴스: {EVENTS[st.session_state.day+1][0]} (신뢰도 {trust}%)")
@@ -121,13 +110,11 @@ for i, name in enumerate(ITEMS):
         st.subheader(name)
         st.write(f"{stock['price']:,}원 {arrow(stock['history'])}")
         st.write(f"보유 {st.session_state.portfolio[name]}개")
-
         if st.button("매수", key=f"b_{name}"):
             if st.session_state.cash >= stock["price"]:
                 st.session_state.cash -= stock["price"]
                 st.session_state.portfolio[name] += 1
                 st.session_state.risk += 1
-
         if st.button("매도", key=f"s_{name}"):
             if st.session_state.portfolio[name] > 0:
                 st.session_state.cash += stock["price"]
@@ -136,32 +123,30 @@ for i, name in enumerate(ITEMS):
 
 st.divider()
 
-# ===== 다음 날 버튼 =====
-if st.button("▶ 다음 날"):
-    if st.session_state.day < DAY_LIMIT:
-        st.session_state.day += 1
-        update_prices()
-    else:
-        st.session_state.page = "result"
-    st.experimental_rerun()  # 한 번만 호출 → 그래프 갱신됨
-
-# ===== 그래프 =====
-st.subheader("📈 가격 추이")
-fig, ax = plt.subplots(figsize=(10, 5), dpi=120)
+# ===== 색상 안내 (그래프 위) =====
 colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd"]
-
-for i, name in enumerate(ITEMS):
-    ax.plot(st.session_state.stocks[name]["history"], linewidth=2, color=colors[i])
-
-ax.grid(alpha=0.3)
-ax.set_xlabel("Day", fontsize=10)
-ax.set_ylabel("Price", fontsize=10)
-
-st.pyplot(fig)
-
-# ===== 색상 안내 (텍스트 + 이모지) =====
 st.subheader("📌 메뉴 색상 안내")
 menu_display = ""
 for i, name in enumerate(ITEMS):
     menu_display += f"<span style='color:{colors[i]}'>⬛ {name}</span>  "
 st.markdown(menu_display, unsafe_allow_html=True)
+
+# ===== 그래프 =====
+st.subheader("📈 가격 추이")
+fig, ax = plt.subplots(figsize=(10, 5), dpi=120)
+for i, name in enumerate(ITEMS):
+    ax.plot(st.session_state.stocks[name]["history"], linewidth=2, color=colors[i])
+ax.grid(alpha=0.3)
+ax.set_xlabel("Day", fontsize=10)
+ax.set_ylabel("Price", fontsize=10)
+st.pyplot(fig)
+
+# ===== 다음 날 버튼 =====
+next_day_clicked = st.button("▶ 다음 날")
+if next_day_clicked:
+    if st.session_state.day < DAY_LIMIT:
+        st.session_state.day += 1
+        update_prices()
+    else:
+        st.session_state.page = "result"
+    st.experimental_rerun()
