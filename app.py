@@ -33,8 +33,11 @@ def reset_game():
         "포켓몬빵": {"price": 1800, "vol": 0.13, "history": [1800]},
     }
 
+# ===== 세션 초기화 =====
 if "page" not in st.session_state:
     reset_game()
+if "next_day_clicked" not in st.session_state:
+    st.session_state.next_day_clicked = False
 
 # ===== 이벤트 =====
 EVENTS = {
@@ -125,15 +128,23 @@ for i, name in enumerate(ITEMS):
 
 st.divider()
 
-# ===== 다음 날 버튼 (그래프 위) =====
-next_day_clicked = st.button("▶ 다음 날")
-if next_day_clicked:
+# ===== 다음 날 버튼 + 메뉴 색상 블록 (그래프 위) =====
+menu_display = ""
+for i, name in enumerate(ITEMS):
+    menu_display += f"<span style='color:{colors[i]}'>⬛ {name}</span>  "
+st.markdown(menu_display, unsafe_allow_html=True)
+
+if st.button("▶ 다음 날"):
+    st.session_state.next_day_clicked = True
+
+if st.session_state.next_day_clicked:
     if st.session_state.day < DAY_LIMIT:
         st.session_state.day += 1
-        update_prices()  # 가격 즉시 업데이트
+        update_prices()
     else:
         st.session_state.page = "result"
-    st.experimental_rerun()  # 버튼 클릭 직후 rerun → 그래프 바로 갱신
+    st.session_state.next_day_clicked = False
+    st.experimental_rerun()  # 안전하게 rerun
 
 # ===== 그래프 =====
 fig, ax = plt.subplots(figsize=(10, 5), dpi=120)
