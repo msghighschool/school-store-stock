@@ -125,7 +125,7 @@ for i, name in enumerate(ITEMS):
 
 st.divider()
 
-# ===== 다음 날 버튼 (그래프 바로 위) =====
+# ===== 다음 날 버튼 (그래프 위) =====
 next_day_clicked = st.button("▶ 다음 날")
 if next_day_clicked:
     if st.session_state.day < DAY_LIMIT:
