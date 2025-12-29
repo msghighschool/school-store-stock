@@ -17,6 +17,7 @@ st.set_page_config(
 
 ITEMS = ["이온음료", "오꾸밥", "아이스크림", "젤리", "포켓몬빵"]
 DAY_LIMIT = 30
+colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd"]
 
 def reset_game():
     st.session_state.page = "game"
@@ -103,6 +104,7 @@ if st.session_state.day + 1 in EVENTS:
     trust = random.randint(50, 100)
     st.warning(f"🔮 사전 뉴스: {EVENTS[st.session_state.day+1][0]} (신뢰도 {trust}%)")
 
+# ===== 매수/매도 =====
 cols = st.columns(len(ITEMS))
 for i, name in enumerate(ITEMS):
     stock = st.session_state.stocks[name]
@@ -123,25 +125,7 @@ for i, name in enumerate(ITEMS):
 
 st.divider()
 
-# ===== 색상 안내 (그래프 위) =====
-colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd"]
-st.subheader("📌 메뉴 색상 안내")
-menu_display = ""
-for i, name in enumerate(ITEMS):
-    menu_display += f"<span style='color:{colors[i]}'>⬛ {name}</span>  "
-st.markdown(menu_display, unsafe_allow_html=True)
-
-# ===== 그래프 =====
-st.subheader("📈 가격 추이")
-fig, ax = plt.subplots(figsize=(10, 5), dpi=120)
-for i, name in enumerate(ITEMS):
-    ax.plot(st.session_state.stocks[name]["history"], linewidth=2, color=colors[i])
-ax.grid(alpha=0.3)
-ax.set_xlabel("Day", fontsize=10)
-ax.set_ylabel("Price", fontsize=10)
-st.pyplot(fig)
-
-# ===== 다음 날 버튼 =====
+# ===== 다음 날 버튼 (그래프 위) =====
 next_day_clicked = st.button("▶ 다음 날")
 if next_day_clicked:
     if st.session_state.day < DAY_LIMIT:
@@ -150,3 +134,12 @@ if next_day_clicked:
     else:
         st.session_state.page = "result"
     st.experimental_rerun()
+
+# ===== 그래프 =====
+fig, ax = plt.subplots(figsize=(10, 5), dpi=120)
+for i, name in enumerate(ITEMS):
+    ax.plot(st.session_state.stocks[name]["history"], linewidth=2, color=colors[i])
+ax.grid(alpha=0.3)
+ax.set_xlabel("Day", fontsize=10)
+ax.set_ylabel("Price", fontsize=10)
+st.pyplot(fig)
