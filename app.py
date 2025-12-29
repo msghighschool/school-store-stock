@@ -140,21 +140,20 @@ if st.button("▶ 다음 날"):
     if st.session_state.day < DAY_LIMIT:
         st.session_state.day += 1
         update_prices()
-        st.experimental_rerun()
     else:
         st.session_state.page = "result"
-        st.experimental_rerun()
+    st.experimental_rerun()  # 마지막 한 번만 호출
 
 # ===== 그래프 =====
 st.subheader("📈 가격 추이")
-fig, ax = plt.subplots(figsize=(6, 3))  # 작고 선명하게
+fig, ax = plt.subplots(figsize=(10, 5), dpi=120)  # 적당한 크기 + 선명도
 
 for name in ITEMS:
     ax.plot(st.session_state.stocks[name]["history"], linewidth=2, label=name)
 
-ax.legend(fontsize=8, ncol=3, loc="upper center")
+ax.legend(fontsize=10, ncol=3, loc="upper center")
 ax.grid(alpha=0.3)
-ax.set_xlabel("Day")
-ax.set_ylabel("Price")
+ax.set_xlabel("Day", fontsize=10)
+ax.set_ylabel("Price", fontsize=10)
 
 st.pyplot(fig)
