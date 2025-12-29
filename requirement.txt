@@ -1,6 +1,0 @@
-streamlit
-matplotlib
-flask
-pandas
-numpy
-
