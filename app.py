@@ -104,7 +104,7 @@ if st.session_state.day + 1 in EVENTS:
     trust = random.randint(50, 100)
     st.warning(f"🔮 사전 뉴스: {EVENTS[st.session_state.day+1][0]} (신뢰도 {trust}%)")
 
-# ===== 매수/매도 =====
+# ===== 매수/매도 버튼 =====
 cols = st.columns(len(ITEMS))
 for i, name in enumerate(ITEMS):
     stock = st.session_state.stocks[name]
@@ -125,15 +125,15 @@ for i, name in enumerate(ITEMS):
 
 st.divider()
 
-# ===== 다음 날 버튼 (그래프 위) =====
+# ===== 다음 날 버튼 (그래프 바로 위) =====
 next_day_clicked = st.button("▶ 다음 날")
 if next_day_clicked:
     if st.session_state.day < DAY_LIMIT:
         st.session_state.day += 1
-        update_prices()
+        update_prices()  # 가격 즉시 업데이트
     else:
         st.session_state.page = "result"
-    st.experimental_rerun()
+    st.experimental_rerun()  # 버튼 클릭 직후 rerun → 그래프 바로 갱신
 
 # ===== 그래프 =====
 fig, ax = plt.subplots(figsize=(10, 5), dpi=120)
