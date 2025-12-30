@@ -104,7 +104,6 @@ if st.button("▶ 다음 날"):
         update_prices()
     else:
         st.session_state.show_result = True
-st.experimental_rerun()
 
 
 # ================== 그래프 ==================
@@ -147,4 +146,5 @@ if st.session_state.show_result:
         style = "안정형 🐢"
     st.success(f"🏁 게임 종료\n💰 최종 자산: {total}원\n📊 투자 성향: {style}")
     st.stop()
+
 
