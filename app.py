@@ -83,6 +83,8 @@ def calc_total_asset():
 # ================== 결과 페이지 ==================
 if st.session_state.page == "result":
     st.title("🏁 모의 투자 결과")
+    st.caption("이 페이지를 다음 링크에 업로드해주시면 랭킹에 따라 추후 소정의 상품을 드립니다❤ by 컴퓨터온 동아리")
+
 
     total_asset = calc_total_asset()
     profit = total_asset - START_CASH
@@ -111,6 +113,7 @@ if st.session_state.page == "result":
 
 # ================== 게임 화면 ==================
 st.title("🏪 매점 모의 주식 게임")
+st.caption("⚠️ 현재 버그로 인해 하루에 한번 매수 또는 매도를 해야 뉴스와 그래프가 나타나고, 반드시 ▶ 다음 날 버튼을 눌러야 보유 개수와 현금이 제대로 갱신됩니다. by 컴퓨터온 동아리")
 st.write(f"📅 Day {st.session_state.day} / {DAY_LIMIT}")
 st.write(f"💰 현금: {st.session_state.cash:,}원")
 
@@ -123,26 +126,6 @@ if st.session_state.day + 1 in EVENTS:
     trust = random.randint(50, 100)
     st.warning(f"🔮 사전 뉴스: {EVENTS[st.session_state.day+1][0]} (신뢰도 {trust}%)")
 
-# ================== 매수 / 매도 ==================
-cols = st.columns(len(ITEMS))
-for i, name in enumerate(ITEMS):
-    stock = st.session_state.stocks[name]
-    with cols[i]:
-        st.subheader(name)
-        st.write(f"{stock['price']:,}원 {arrow(stock['history'])}")
-        st.write(f"보유: {st.session_state.portfolio[name]}개")
-
-        if st.button("매수", key=f"buy_{name}"):
-            if st.session_state.cash >= stock["price"]:
-                st.session_state.cash -= stock["price"]
-                st.session_state.portfolio[name] += 1
-                st.session_state.risk += 1
-
-        if st.button("매도", key=f"sell_{name}"):
-            if st.session_state.portfolio[name] > 0:
-                st.session_state.cash += stock["price"]
-                st.session_state.portfolio[name] -= 1
-                st.session_state.risk -= 1
 
 # ================== 총자산 표시 ==================
 total_asset = calc_total_asset()
@@ -170,6 +153,27 @@ if st.button("▶ 다음 날"):
         st.session_state.page = "result"
         st.experimental_rerun()
 
+# ================== 매수 / 매도 ==================
+cols = st.columns(len(ITEMS))
+for i, name in enumerate(ITEMS):
+    stock = st.session_state.stocks[name]
+    with cols[i]:
+        st.subheader(name)
+        st.write(f"{stock['price']:,}원 {arrow(stock['history'])}")
+        st.write(f"보유: {st.session_state.portfolio[name]}개")
+
+        if st.button("매수", key=f"buy_{name}"):
+            if st.session_state.cash >= stock["price"]:
+                st.session_state.cash -= stock["price"]
+                st.session_state.portfolio[name] += 1
+                st.session_state.risk += 1
+
+        if st.button("매도", key=f"sell_{name}"):
+            if st.session_state.portfolio[name] > 0:
+                st.session_state.cash += stock["price"]
+                st.session_state.portfolio[name] -= 1
+                st.session_state.risk -= 1
+                
 # ================== 그래프 ==================
 fig, ax = plt.subplots(figsize=(9, 4), dpi=120)
 for i, name in enumerate(ITEMS):
@@ -185,3 +189,4 @@ ax.set_ylabel("Price")
 ax.grid(alpha=0.3)
 ax.legend(fontsize=8)
 st.pyplot(fig)
+
