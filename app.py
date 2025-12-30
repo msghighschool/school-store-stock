@@ -1,13 +1,6 @@
 import streamlit as st
 import random
 import matplotlib.pyplot as plt
-import matplotlib.font_manager as fm
-
-# ================== 폰트 설정 ==================
-font_path = "NanumGothic-Regular.ttf"  # 루트에 폰트 파일 필요
-font_prop = fm.FontProperties(fname=font_path)
-plt.rcParams["font.family"] = font_prop.get_name()
-plt.rcParams["axes.unicode_minus"] = False
 
 # ================== 기본 설정 ==================
 st.set_page_config(page_title="🏪 매점 주식 게임", layout="wide")
@@ -23,7 +16,6 @@ def reset_game():
     st.session_state.cash = START_CASH
     st.session_state.portfolio = {k: 0 for k in ITEMS}
     st.session_state.risk = 0
-    st.session_state.page = "game"
     st.session_state.show_result = False
     st.session_state.stocks = {
         "이온음료": {"price": 1200, "vol": 0.12, "history": [1200]},
@@ -52,39 +44,31 @@ EVENTS = {
 def update_prices():
     for name, data in st.session_state.stocks.items():
         change = random.uniform(-data["vol"], data["vol"])
-
         if st.session_state.day in EVENTS:
             _, effect = EVENTS[st.session_state.day]
             if name in effect:
                 change += effect[name]
             elif "전체" in effect:
                 change += effect["전체"]
-
         if random.random() < 0.15:
             change += random.uniform(-0.25, 0.25)
-
         new_price = max(500, int(data["price"] * (1 + change)))
         data["price"] = new_price
         data["history"].append(new_price)
 
-# ================== 화살표 ==================
 def arrow(h):
-    if len(h) < 2:
-        return "➖"
-    if h[-1] > h[-2]:
-        return "▲"
-    if h[-1] < h[-2]:
-        return "▼"
+    if len(h) < 2: return "➖"
+    if h[-1] > h[-2]: return "▲"
+    if h[-1] < h[-2]: return "▼"
     return "➖"
 
-# ================== 총자산 계산 ==================
 def calc_total_asset():
     return st.session_state.cash + sum(
         st.session_state.portfolio[n] * st.session_state.stocks[n]["price"] for n in ITEMS
     )
 
 # ================== 결과 페이지 ==================
-if st.session_state.page == "result" or st.session_state.show_result:
+if st.session_state.show_result:
     st.title("🏁 모의 투자 결과")
     st.caption("이 페이지를 다음 링크에 업로드해주시면 랭킹에 따라 추후 소정의 상품을 드립니다❤ by 컴퓨터온 동아리")
 
@@ -115,15 +99,14 @@ if st.session_state.page == "result" or st.session_state.show_result:
 
 # ================== 게임 화면 ==================
 st.title("🏪 매점 모의 주식 게임")
-st.caption("⚠️ 현재 버그로 인해 하루에 한번 매수 또는 매도를 해야 뉴스와 그래프가 나타나고, 반드시 ▶ 다음 날 버튼을 눌러야 보유 개수와 현금이 제대로 갱신됩니다. by 컴퓨터온 동아리")
+st.caption("⚠️ 하루에 최소 한 번 매수/매도를 해야 뉴스와 그래프가 갱신됩니다. ▶ 다음 날 버튼으로 보유 개수와 현금이 업데이트됩니다.")
 st.write(f"📅 Day {st.session_state.day} / {DAY_LIMIT}")
 st.write(f"💰 현금: {st.session_state.cash:,}원")
 
 # 오늘 뉴스
 if st.session_state.day in EVENTS:
     st.info(f"📰 오늘 뉴스: {EVENTS[st.session_state.day][0]}")
-
-# 사전 뉴스 (내일)
+# 내일 뉴스
 if st.session_state.day + 1 in EVENTS:
     trust = random.randint(50, 100)
     st.warning(f"🔮 사전 뉴스: {EVENTS[st.session_state.day+1][0]} (신뢰도 {trust}%)")
@@ -132,11 +115,9 @@ if st.session_state.day + 1 in EVENTS:
 total_asset = calc_total_asset()
 profit = total_asset - START_CASH
 profit_rate = profit / START_CASH * 100
-
 st.metric("💰 총자산", f"{total_asset:,}원")
 st.metric("📈 총수익", f"{profit:+,}원")
 st.metric("📊 수익률", f"{profit_rate:+.1f}%")
-
 st.divider()
 
 # ================== 매수 / 매도 ==================
@@ -147,14 +128,12 @@ for i, name in enumerate(ITEMS):
         st.subheader(name)
         st.write(f"{stock['price']:,}원 {arrow(stock['history'])}")
         st.write(f"보유: {st.session_state.portfolio[name]}개")
-
-        if st.button("매수", key=f"buy_{name}"):
+        if st.button(f"매수 {name}", key=f"buy_{name}"):
             if st.session_state.cash >= stock["price"]:
                 st.session_state.cash -= stock["price"]
                 st.session_state.portfolio[name] += 1
                 st.session_state.risk += 1
-
-        if st.button("매도", key=f"sell_{name}"):
+        if st.button(f"매도 {name}", key=f"sell_{name}"):
             if st.session_state.portfolio[name] > 0:
                 st.session_state.cash += stock["price"]
                 st.session_state.portfolio[name] -= 1
@@ -166,19 +145,24 @@ for i, name in enumerate(ITEMS):
     legend += f"<span style='color:{COLORS[i]}'>⬛ {name}</span>&nbsp;&nbsp;"
 st.markdown(legend, unsafe_allow_html=True)
 
-if st.button("▶ 다음 날"):
+next_day_clicked = st.button("▶ 다음 날")
+if next_day_clicked:
     if st.session_state.day < DAY_LIMIT:
         st.session_state.day += 1
-        update_prices()  # 가격 업데이트
+        update_prices()
     else:
         st.session_state.show_result = True
-    st.experimental_rerun()  # 안전하게 rerun
+    st.experimental_rerun()  # 버튼 클릭 시만 rerun
 
 # ================== 그래프 ==================
-st.subheader("📈 가격 추이")
-fig, ax = plt.subplots(figsize=(10, 5), dpi=120)
+fig, ax = plt.subplots(figsize=(9, 4), dpi=120)
 for i, name in enumerate(ITEMS):
-    ax.plot(st.session_state.stocks[name]["history"], color=COLORS[i], linewidth=2, label=name)
+    ax.plot(
+        st.session_state.stocks[name]["history"],
+        color=COLORS[i],
+        linewidth=2,
+        label=name,
+    )
 ax.set_xlabel("Day")
 ax.set_ylabel("Price")
 ax.grid(alpha=0.3)
