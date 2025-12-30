@@ -38,7 +38,7 @@ if "day" not in st.session_state:
 # ================== 이벤트 ==================
 EVENTS = {
     3: ("모의고사 → 쉬는 시간 증가", {"이온음료": 0.25}),
-    5: ("중간고사 시작 → 매점 이용 감소", {"전체": -0.15}),
+    5: ("중간고사 → 이용 감소", {"전체": -0.15}),
     6: ("시험 과목 多 → 음료 폭증", {"이온음료": 0.4}),
     13: ("단축수업", {"오꾸밥": 0.2}),
     14: ("이동수업 많음", {"전체": -0.1}),
@@ -75,17 +75,16 @@ def arrow(h):
         return "▼"
     return "➖"
 
+def calc_total_asset():
+    return st.session_state.cash + sum(
+        st.session_state.portfolio[n] * st.session_state.stocks[n]["price"] for n in ITEMS
+    )
+
 # ================== 결과 페이지 ==================
 if st.session_state.page == "result":
     st.title("🏁 모의 투자 결과")
 
-    total_asset = st.session_state.cash
-    for name in ITEMS:
-        total_asset += (
-            st.session_state.portfolio[name]
-            * st.session_state.stocks[name]["price"]
-        )
-
+    total_asset = calc_total_asset()
     profit = total_asset - START_CASH
     profit_rate = profit / START_CASH * 100
 
@@ -101,10 +100,13 @@ if st.session_state.page == "result":
     st.metric("📊 수익률", f"{profit_rate:+.1f}%")
     st.metric("🧠 투자 성향", style)
 
+    st.subheader("📦 보유 자산")
+    for k, v in st.session_state.portfolio.items():
+        st.write(f"{k}: {v}개")
+
     if st.button("🔄 다시 하기"):
         reset_game()
         st.experimental_rerun()
-
     st.stop()
 
 # ================== 게임 화면 ==================
@@ -119,9 +121,7 @@ if st.session_state.day in EVENTS:
 # 사전 뉴스 (내일)
 if st.session_state.day + 1 in EVENTS:
     trust = random.randint(50, 100)
-    st.warning(
-        f"🔮 사전 뉴스: {EVENTS[st.session_state.day+1][0]} (신뢰도 {trust}%)"
-    )
+    st.warning(f"🔮 사전 뉴스: {EVENTS[st.session_state.day+1][0]} (신뢰도 {trust}%)")
 
 # ================== 매수 / 매도 ==================
 cols = st.columns(len(ITEMS))
@@ -143,6 +143,15 @@ for i, name in enumerate(ITEMS):
                 st.session_state.cash += stock["price"]
                 st.session_state.portfolio[name] -= 1
                 st.session_state.risk -= 1
+
+# ================== 총자산 표시 ==================
+total_asset = calc_total_asset()
+profit = total_asset - START_CASH
+profit_rate = profit / START_CASH * 100
+
+st.metric("💰 총자산", f"{total_asset:,}원")
+st.metric("📈 총수익", f"{profit:+,}원")
+st.metric("📊 수익률", f"{profit_rate:+.1f}%")
 
 st.divider()
 
