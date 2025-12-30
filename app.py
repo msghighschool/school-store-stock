@@ -1,13 +1,6 @@
 import streamlit as st
 import random
 import matplotlib.pyplot as plt
-import matplotlib.font_manager as fm
-
-# ================== 폰트 설정 ==================
-font_path = "NanumGothic-Regular.ttf"  # 루트에 폰트 파일 필요
-font_prop = fm.FontProperties(fname=font_path)
-plt.rcParams["font.family"] = font_prop.get_name()
-plt.rcParams["axes.unicode_minus"] = False
 
 # ================== 기본 설정 ==================
 st.set_page_config(page_title="🏪 매점 주식 게임", layout="wide")
@@ -23,7 +16,7 @@ def reset_game():
     st.session_state.cash = START_CASH
     st.session_state.portfolio = {k: 0 for k in ITEMS}
     st.session_state.risk = 0
-    st.session_state.page = "game"
+    st.session_state.page = "game"  # game / result
     st.session_state.stocks = {
         "이온음료": {"price": 1200, "vol": 0.12, "history": [1200]},
         "오꾸밥": {"price": 2000, "vol": 0.10, "history": [2000]},
@@ -32,7 +25,7 @@ def reset_game():
         "포켓몬빵": {"price": 1800, "vol": 0.13, "history": [1800]},
     }
 
-if "day" not in st.session_state:
+if "page" not in st.session_state:
     reset_game()
 
 # ================== 이벤트 ==================
@@ -51,17 +44,14 @@ EVENTS = {
 def update_prices():
     for name, data in st.session_state.stocks.items():
         change = random.uniform(-data["vol"], data["vol"])
-
         if st.session_state.day in EVENTS:
             _, effect = EVENTS[st.session_state.day]
             if name in effect:
                 change += effect[name]
             elif "전체" in effect:
                 change += effect["전체"]
-
         if random.random() < 0.15:
             change += random.uniform(-0.25, 0.25)
-
         new_price = max(500, int(data["price"] * (1 + change)))
         data["price"] = new_price
         data["history"].append(new_price)
@@ -80,11 +70,16 @@ def calc_total_asset():
         st.session_state.portfolio[n] * st.session_state.stocks[n]["price"] for n in ITEMS
     )
 
+# ================== 공통 캡션 ==================
+caption_slot = st.empty()
+caption_slot.caption(
+    "⚠️ 하루에 한번 매수·매도를 해야 뉴스와 그래프가 나타나며, ▶ 다음 날 버튼을 눌러야 보유 개수와 현금이 갱신됩니다. by 컴퓨터온 동아리"
+)
+
 # ================== 결과 페이지 ==================
 if st.session_state.page == "result":
     st.title("🏁 모의 투자 결과")
-    st.caption("이 페이지를 다음 링크에 업로드해주시면 랭킹에 따라 추후 소정의 상품을 드립니다❤ by 컴퓨터온 동아리")
-
+    st.caption("이 페이지를 업로드하면 랭킹에 따라 소정의 상품을 드립니다❤ by 컴퓨터온 동아리")
 
     total_asset = calc_total_asset()
     profit = total_asset - START_CASH
@@ -113,19 +108,14 @@ if st.session_state.page == "result":
 
 # ================== 게임 화면 ==================
 st.title("🏪 매점 모의 주식 게임")
-st.caption("⚠️ 현재 버그로 인해 하루에 한번 매수 또는 매도를 해야 뉴스와 그래프가 나타나고, 반드시 ▶ 다음 날 버튼을 눌러야 보유 개수와 현금이 제대로 갱신됩니다. by 컴퓨터온 동아리")
 st.write(f"📅 Day {st.session_state.day} / {DAY_LIMIT}")
 st.write(f"💰 현금: {st.session_state.cash:,}원")
 
-# 오늘 뉴스
 if st.session_state.day in EVENTS:
     st.info(f"📰 오늘 뉴스: {EVENTS[st.session_state.day][0]}")
-
-# 사전 뉴스 (내일)
 if st.session_state.day + 1 in EVENTS:
     trust = random.randint(50, 100)
     st.warning(f"🔮 사전 뉴스: {EVENTS[st.session_state.day+1][0]} (신뢰도 {trust}%)")
-
 
 # ================== 총자산 표시 ==================
 total_asset = calc_total_asset()
@@ -138,12 +128,13 @@ st.metric("📊 수익률", f"{profit_rate:+.1f}%")
 
 st.divider()
 
-# ================== 다음 날 ==================
+# ================== 메뉴 색상 표시 ==================
 legend = ""
 for i, name in enumerate(ITEMS):
     legend += f"<span style='color:{COLORS[i]}'>⬛ {name}</span>&nbsp;&nbsp;"
 st.markdown(legend, unsafe_allow_html=True)
 
+# ================== 다음 날 버튼 ==================
 if st.button("▶ 다음 날"):
     if st.session_state.day < DAY_LIMIT:
         st.session_state.day += 1
@@ -173,7 +164,7 @@ for i, name in enumerate(ITEMS):
                 st.session_state.cash += stock["price"]
                 st.session_state.portfolio[name] -= 1
                 st.session_state.risk -= 1
-                
+
 # ================== 그래프 ==================
 fig, ax = plt.subplots(figsize=(9, 4), dpi=120)
 for i, name in enumerate(ITEMS):
@@ -189,4 +180,3 @@ ax.set_ylabel("Price")
 ax.grid(alpha=0.3)
 ax.legend(fontsize=8)
 st.pyplot(fig)
-
